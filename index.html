@@ -91,30 +91,44 @@
     <a-entity camera></a-entity>
   </a-scene>
   <script>
-    let carnetScanned = false;
-    let steaScanned = false;
+ let carnetScanned = false;
+  let steaScanned = false;
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const carnetMarker = document.querySelector('a-nft[url="carnet"]');
+    const steaMarker = document.querySelector('a-nft[url="stea"]');
+    const steaEntity = steaMarker.querySelector('a-entity');
+    const steaText = steaMarker.querySelector('a-text');
     
-    document.addEventListener('DOMContentLoaded', function() {
-      const carnетMarker = document.querySelector('a-nft[url="carnet"]');
-      const steaMarker = document.querySelector('a-nft[url="stea"]');
-      const steaEntity = steaMarker.querySelector('a-entity');
-      
-      // Hide stea object initially
-      steaEntity.setAttribute('visible', 'false');
-      
-      carnетMarker.addEventListener('markerFound', function() {
-        carnетScanned = true;
-        console.log('Carnet scanned!');
-      });
-      
-      steaMarker.addEventListener('markerFound', function() {
-        if (carnетScanned) {
-          steaEntity.setAttribute('visible', 'true');
-          steaScanned = true;
-          console.log('Stea now visible!');
-        }
-      });
+    // Hide stea object initially
+    steaEntity.setAttribute('visible', 'false');
+    steaText.setAttribute('visible', 'false');
+    
+    // When carnet is found
+    carnetMarker.addEventListener('markerFound', function() {
+      carnetScanned = true;
+      console.log('Carnet scanned!');
     });
+    
+    // When stea is found
+    steaMarker.addEventListener('markerFound', function() {
+      if (carnetScanned && !steaScanned) {
+        steaEntity.setAttribute('visible', 'true');
+        steaText.setAttribute('visible', 'true');
+        steaScanned = true;
+        console.log('Stea now visible!');
+      }
+    });
+    
+    // IMPORTANT: Prevent hiding when marker is lost (after it's been unlocked)
+    steaMarker.addEventListener('markerLost', function() {
+      if (steaScanned) {
+        // Keep it visible even when marker is lost
+        steaEntity.setAttribute('visible', 'true');
+        steaText.setAttribute('visible', 'true');
+      }
+    });
+  });
   </script>
 </body>
 
