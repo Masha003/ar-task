@@ -22,6 +22,66 @@
     font-size: 1.25em;
     color: white;
   }
+
+  .info-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    z-index: 1000;
+    display: none;
+    text-align: center;
+    max-width: 80%;
+  }
+
+  .info-panel.visible {
+    display: block;
+  }
+
+  /* Instructions overlay */
+  .instructions {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 1000;
+    text-align: center;
+  }
+
+  /* Interactive button */
+  .interact-btn {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1000;
+    display: none;
+  }
+
+  .interact-btn.visible {
+    display: block;
+  }
+
+  .interact-btn:active {
+    background-color: #45a049;
+  }
 </style>
 
 <body style="margin: 0px; overflow: hidden">
@@ -29,6 +89,16 @@
   <div class="arjs-loader">
     <div>Loading, please wait...</div>
   </div>
+
+  <div class="instructions">
+    Scan the first marker to unlock the second one!
+  </div>
+
+  <!-- Info panel for descriptions -->
+  <div id="info-panel" class="info-panel"></div>
+
+  <!-- Interactive button -->
+  <button id="interact-btn" class="interact-btn">Rotate Model</button>
 
   <!-- a-frame scene -->
   <a-scene
@@ -52,6 +122,7 @@
         gltf-model="earth.glb"
         scale="2 2 2"
         position="10 10 0"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
       >
       </a-entity>
       <a-text 
@@ -91,44 +162,104 @@
     <a-entity camera></a-entity>
   </a-scene>
   <script>
- let carnetScanned = false;
-  let steaScanned = false;
-  
-  document.addEventListener('DOMContentLoaded', function() {
-    const carnetMarker = document.querySelector('a-nft[url="carnet"]');
-    const steaMarker = document.querySelector('a-nft[url="stea"]');
-    const steaEntity = steaMarker.querySelector('a-entity');
-    const steaText = steaMarker.querySelector('a-text');
-    
-    // Hide stea object initially
-    steaEntity.setAttribute('visible', 'false');
-    steaText.setAttribute('visible', 'false');
-    
-    // When carnet is found
-    carnetMarker.addEventListener('markerFound', function() {
-      carnetScanned = true;
-      console.log('Carnet scanned!');
+    let carnetScanned = false;
+    let steaScanned = false;
+    let currentMarker = null;
+    let isRotating = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const carnetMarker = document.querySelector('a-nft[url="carnet"]');
+      const steaMarker = document.querySelector('a-nft[url="stea"]');
+      const steaEntity = document.getElementById('cosmonaut-model');
+      const earthEntity = document.getElementById('earth-model');
+      const infoPanel = document.getElementById('info-panel');
+      const interactBtn = document.getElementById('interact-btn');
+      const instructions = document.querySelector('.instructions');
+
+      // Hide stea object initially
+      steaEntity.setAttribute('visible', 'false');
+
+      // Carnet marker events
+      carnetMarker.addEventListener('markerFound', function() {
+        carnetScanned = true;
+        currentMarker = 'carnet';
+        console.log('Carnet scanned!');
+        
+        infoPanel.textContent = '🌍 Planet Earth - Home to all known life in the universe';
+        infoPanel.classList.add('visible');
+        interactBtn.classList.add('visible');
+        
+        if (!steaScanned) {
+          instructions.textContent = 'Great! Now scan the second marker to see the astronaut.';
+        } else {
+          instructions.style.display = 'none';
+        }
+      });
+
+      carnetMarker.addEventListener('markerLost', function() {
+        if (currentMarker === 'carnet') {
+          infoPanel.classList.remove('visible');
+          interactBtn.classList.remove('visible');
+          currentMarker = null;
+        }
+      });
+
+      // Stea marker events
+      steaMarker.addEventListener('markerFound', function() {
+        currentMarker = 'stea';
+        
+        if (carnetScanned) {
+          if (!steaScanned) {
+            steaEntity.setAttribute('visible', 'true');
+            steaScanned = true;
+            console.log('Stea unlocked and visible!');
+            instructions.textContent = '🎉 Both markers unlocked! Tap "Rotate Model" to interact.';
+          }
+          
+          infoPanel.textContent = '🚀 Astronaut on a Rocket - Exploring the final frontier';
+          infoPanel.classList.add('visible');
+          interactBtn.classList.add('visible');
+        } else {
+          infoPanel.textContent = '🔒 Locked! Scan the Earth marker first.';
+          infoPanel.classList.add('visible');
+          console.log('Stea locked - scan carnet first!');
+        }
+      });
+
+      steaMarker.addEventListener('markerLost', function() {
+        if (steaScanned && currentMarker === 'stea') {
+          steaEntity.setAttribute('visible', 'true');
+        }
+        if (currentMarker === 'stea') {
+          infoPanel.classList.remove('visible');
+          interactBtn.classList.remove('visible');
+          currentMarker = null;
+        }
+      });
+
+      // Interactive button - Rotation toggle
+      interactBtn.addEventListener('click', function() {
+        const activeModel = currentMarker === 'carnet' ? earthEntity : steaEntity;
+        
+        if (isRotating) {
+          // Stop rotation
+          activeModel.removeAttribute('animation');
+          interactBtn.textContent = 'Rotate Model';
+          isRotating = false;
+        } else {
+          // Start rotation
+          activeModel.setAttribute('animation', {
+            property: 'rotation',
+            to: '0 360 0',
+            loop: true,
+            dur: 5000,
+            easing: 'linear'
+          });
+          interactBtn.textContent = 'Stop Rotation';
+          isRotating = true;
+        }
+      });
     });
-    
-    // When stea is found
-    steaMarker.addEventListener('markerFound', function() {
-      if (carnetScanned && !steaScanned) {
-        steaEntity.setAttribute('visible', 'true');
-        steaText.setAttribute('visible', 'true');
-        steaScanned = true;
-        console.log('Stea now visible!');
-      }
-    });
-    
-    // IMPORTANT: Prevent hiding when marker is lost (after it's been unlocked)
-    steaMarker.addEventListener('markerLost', function() {
-      if (steaScanned) {
-        // Keep it visible even when marker is lost
-        steaEntity.setAttribute('visible', 'true');
-        steaText.setAttribute('visible', 'true');
-      }
-    });
-  });
   </script>
 </body>
 
