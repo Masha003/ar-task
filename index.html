@@ -55,22 +55,26 @@
         position="0 0.5 0"
       >
       </a-entity>
-      <a-entity
-      position="1 0 0"
-      scale="3 3 3"
-      text="value: HELLO;color:yellow"
-    ></a-entity>
     </a-nft>
 
+    <a-nft
+    type="nft"
+    url="stea"
+    smooth="true"
+    smoothCount="10"
+    smoothTolerance=".01"
+    smoothThreshold="5"
+  >
+    <!-- as a child of the a-nft entity, you can define the content to show. here's a GLTF model entity -->
+    <a-entity
+      gltf-model="scene.gltf"
+      scale="0.5 0.5 0.5"
+      position="0 0.5 0"
+    >
+    </a-entity>
+  </a-nft>
 
-    <!--  <a-text 
-    value="Hello, AR World!" 
-    color="yellow" 
-    width="4" 
-    position="50 150 0"
-    
-    
-  >-->
+
     <!-- static camera that moves according to the device movemenents -->
     <a-entity camera></a-entity>
   </a-scene>
