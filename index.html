@@ -90,5 +90,31 @@
     <!-- static camera that moves according to the device movemenents -->
     <a-entity camera></a-entity>
   </a-scene>
+  <script>
+    let carnetScanned = false;
+    let steaScanned = false;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      const carnетMarker = document.querySelector('a-nft[url="carnet"]');
+      const steaMarker = document.querySelector('a-nft[url="stea"]');
+      const steaEntity = steaMarker.querySelector('a-entity');
+      
+      // Hide stea object initially
+      steaEntity.setAttribute('visible', 'false');
+      
+      carnетMarker.addEventListener('markerFound', function() {
+        carnетScanned = true;
+        console.log('Carnet scanned!');
+      });
+      
+      steaMarker.addEventListener('markerFound', function() {
+        if (carnетScanned) {
+          steaEntity.setAttribute('visible', 'true');
+          steaScanned = true;
+          console.log('Stea now visible!');
+        }
+      });
+    });
+  </script>
 </body>
 
